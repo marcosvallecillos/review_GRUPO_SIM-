@@ -15,7 +15,7 @@ import {
 
 const GOOGLE_REVIEW_URL =
   "https://search.google.com/local/writereview?placeid=ChIJm7TWlH1SYA0R_WE3Fri3xis";
-const STORAGE_KEY = "rate-experience-private-feedback";
+const STORAGE_KEY = "Grupo-Simó-private-feedback";
 
 const ratingLabels: Record<number, string> = {
   1: "Necesitamos mejorar",
@@ -137,7 +137,7 @@ export default function Home() {
           </button>
           <div className="brand-lockup">
             <span className="brand-kicker">EVALUATION</span>
-            <span className="brand-name">Rate Experience</span>
+            <span className="brand-name">Grupo Simó</span>
           </div>
           <button className="icon-button" type="button" aria-label="Cerrar">
             <X size={21} strokeWidth={1.8} />
