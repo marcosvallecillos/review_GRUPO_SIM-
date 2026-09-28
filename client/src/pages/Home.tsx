@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import {
+import { useEffect, useMemo, useState } from "react";import {
   ArrowLeft,
   Check,
   CheckCircle2,
@@ -12,9 +11,9 @@ import {
   Star,
   X,
 } from "lucide-react";
-
-const GOOGLE_REVIEW_URL =
-  "https://search.google.com/local/writereview?placeid=ChIJm7TWlH1SYA0R_WE3Fri3xis";
+import { supabase } from "../lib/supabase";
+import { useParams } from "react-router-dom";
+const GOOGLE_REVIEW_URL = import.meta.env.VITE_GOOGLE_REVIEW_URL;
 const STORAGE_KEY = "Grupo-Simó-private-feedback";
 
 const ratingLabels: Record<number, string> = {
@@ -34,7 +33,9 @@ export default function Home() {
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSavedHint, setShowSavedHint] = useState(false);
-
+  const [empresa, setEmpresa] = useState<any>(null);
+  const [loadingEmpresa, setLoadingEmpresa] = useState(true);
+  const { slug } = useParams<{ slug: string }>();
   const activeRating = hoveredRating ?? rating ?? 0;
   const characterCount = comment.length;
   const canSubmit = rating !== null && rating <= 3;
@@ -52,20 +53,48 @@ export default function Home() {
         : [...current, suggestion],
     );
   };
+  useEffect(() => {
+  async function cargarEmpresa() {
+    const { data, error } = await supabase
+      .from("empresas")
+      .select("*")
+      .eq("slug", slug);
 
-  const openGoogleReview = () => {
-    const reviewWindow = window.open(GOOGLE_REVIEW_URL, "_blank", "noopener,noreferrer");
-    if (!reviewWindow) window.location.assign(GOOGLE_REVIEW_URL);
-  };
 
-  const handleStarClick = (selectedRating: number) => {
-    if (selectedRating >= 4) {
-      openGoogleReview();
+    if (error) {
+      console.error("Error cargando empresa:", error);
+      setLoadingEmpresa(false);
       return;
     }
 
-    setRating(selectedRating);
-  };
+    if (data && data.length > 0) {
+      setEmpresa(data[0]);
+    }
+
+    setLoadingEmpresa(false);
+  }
+
+  cargarEmpresa();
+}, []);
+
+  const openGoogleReview = () => {
+
+  if (!empresa?.google_review_url) {
+    console.error("No existe la URL de Google");
+    return;
+  }
+
+  window.location.href = empresa.google_review_url;
+};
+
+  const handleStarClick = (selectedRating: number) => {
+  if (selectedRating >= 4) {
+    openGoogleReview();
+    return;
+  }
+
+  setRating(selectedRating);
+};
 
   const handleSubmit = () => {
     if (!canSubmit || rating === null) return;
@@ -96,7 +125,14 @@ export default function Home() {
     setIsSubmitted(false);
     setShowSavedHint(false);
   };
+ 
+  if (loadingEmpresa) {
+  return <p>Cargando empresa...</p>;
+}
 
+if (!empresa) {
+  return <p>No se ha encontrado la empresa.</p>;
+}
   if (isSubmitted) {
     return (
       <main className="experience-shell">
@@ -137,7 +173,7 @@ export default function Home() {
           </button>
           <div className="brand-lockup">
             <span className="brand-kicker">EVALUATION</span>
-            <span className="brand-name">Grupo Simó</span>
+            <span className="brand-name">{empresa.nombre}</span>
           </div>
           <button className="icon-button" type="button" aria-label="Cerrar">
             <X size={21} strokeWidth={1.8} />
@@ -180,7 +216,7 @@ export default function Home() {
               );
             })}
           </div>
-          <p className="rating-helper">Toca las estrellas para calificar a Carlos</p>
+          <p className="rating-helper">Toca las estrellas para calificar el servicio</p>
         </section>
 
         {rating !== null && rating <= 3 && (
